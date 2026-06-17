@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/nav :: head('课程浏览')}"></head>
+<body>
+<nav th:replace="~{fragments/nav :: nav('courses')}"></nav>
+
+<div class="container mt-4">
+    <h3 class="mb-3"><i class="bi bi-book"></i> 课程浏览</h3>
+
+    <!-- 筛选栏 -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small">学期</label>
+                    <select id="filterSemester" class="form-select form-select-sm" onchange="loadCourses()">
+                        <option value="">全部学期</option>
+                        <option value="2025-2026-2" selected>2025-2026-2</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">类别</label>
+                    <select id="filterCategory" class="form-select form-select-sm" onchange="loadCourses()">
+                        <option value="">全部类别</option>
+                        <option value="必修">必修</option>
+                        <option value="选修">选修</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">名额状态</label>
+                    <select id="filterAvailable" class="form-select form-select-sm" onchange="loadCourses()">
+                        <option value="false">全部</option>
+                        <option value="true">仅显示有余额</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">搜索</label>
+                    <input type="text" id="searchInput" class="form-control form-control-sm"
+                           placeholder="课程名称/代码..." oninput="loadCourses()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 课程卡片 -->
+    <div id="courseList" class="row g-3"></div>
+    <div id="emptyHint" class="text-center text-muted py-5 d-none">
+        <i class="bi bi-inbox display-3"></i>
+        <p class="mt-2">没有找到匹配的课程</p>
+    </div>
+</div>
+
+<footer class="text-center text-muted py-4 mt-4">
+    <small>智能选课系统 &copy; 2025</small>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/api.js"></script>
+<script>
+    loadCourses();
+
+    async function loadCourses() {
+        const sem = document.getElementById('filterSemester').value;
+        const cat = document.getElementById('filterCategory').value;
+        const onlyAvail = document.getElementById('filterAvailable').value === 'true';
+        const search = document.getElementById('searchInput').value.toLowerCase();
+
+        let url = '/api/courses';
+        const params = [];
+        if (sem) params.push('semester=' + sem);
+        if (cat) params.push('category=' + cat);
+        if (params.length) url += '?' + params.join('&');
+
+        let courses = await api.get(url);
+        if (!Array.isArray(courses)) courses = [];
+
+        if (onlyAvail) courses = courses.filter(c => c.enrolled < c.capacity);
+        if (search) courses = courses.filter(c =>
+            c.name.toLowerCase().includes(search) || c.courseCode.toLowerCase().includes(search));
+
+        const container = document.getElementById('courseList');
+        const empty = document.getElementById('emptyHint');
+        container.innerHTML = '';
+
+        if (courses.length === 0) {
+            empty.classList.remove('d-none');
+            return;
+        }
+        empty.classList.add('d-none');
+
+        courses.forEach(c => {
+            const remaining = c.capacity - c.enrolled;
+            const fullClass = remaining === 0 ? 'text-danger' : 'text-success';
+            const card = document.createElement('div');
+            card.className = 'col-lg-4 col-md-6';
+            card.innerHTML = `
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <span class="badge ${c.category==='必修'?'bg-warning text-dark':'bg-info'} mb-2">${c.category}</span>
+                        <span class="badge bg-light text-dark">${c.credits}学分</span>
+                        <h6 class="mt-2">${c.courseCode} ${c.name}</h6>
+                        <p class="text-muted small mb-1">
+                            <i class="bi bi-person"></i> ${c.teacherName||'待定'} ${c.teacherTitle||''}
+                        </p>
+                        <p class="text-muted small mb-1">
+                            <i class="bi bi-clock"></i> ${c.schedule||'未安排'} &nbsp;
+                            <i class="bi bi-geo-alt"></i> ${c.location||'未安排'}
+                        </p>
+                        <p class="text-muted small mb-2">${c.description||''}</p>
+                        <div>
+                            <span class="${fullClass} small">
+                                <i class="bi bi-people"></i> ${c.enrolled}/${c.capacity}
+                            </span>
+                            ${c.prerequisites ? `<span class="badge bg-secondary ms-2 small">先修: ${c.prerequisites}</span>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+            container.appendChild(card);
+        });
+    }
+</script>
+</body>
+</html>
