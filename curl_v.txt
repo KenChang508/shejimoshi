@@ -1,0 +1,6 @@
+Note: Unnecessary use of -X or --request, POST is already inferred.
+* URL rejected: Port number was not a decimal number between 0 and 65535
+Note: Unnecessary use of -X or --request, POST is already inferred.
+* Could not resolve host: application
+* Store negative name resolve for application:80
+* shutting down connection #0

@@ -1,0 +1,59 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------< com.courseselect:course-selection-system >--------------
+[INFO] Building CourseSelectionSystem 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ course-selection-system ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 8 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ course-selection-system ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 25 source files with javac [debug release 17] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /D:/project/CourseSelectionSystem/src/main/java/com/courseselect/client/DeepSeekClient.java:[87,29] 对于Message(java.lang.String,java.lang.String), 找不到合适的构造器
+    构造器 com.courseselect.client.DeepSeekClient.Message.Message()不适用
+      (实际参数列表和形式参数列表长度不同)
+    构造器 com.courseselect.client.DeepSeekClient.Message.Message(java.lang.String,java.lang.String,java.lang.String)不适用
+      (实际参数列表和形式参数列表长度不同)
+[ERROR] /D:/project/CourseSelectionSystem/src/main/java/com/courseselect/client/DeepSeekClient.java:[88,29] 对于Message(java.lang.String,java.lang.String), 找不到合适的构造器
+    构造器 com.courseselect.client.DeepSeekClient.Message.Message()不适用
+      (实际参数列表和形式参数列表长度不同)
+    构造器 com.courseselect.client.DeepSeekClient.Message.Message(java.lang.String,java.lang.String,java.lang.String)不适用
+      (实际参数列表和形式参数列表长度不同)
+[ERROR] /D:/project/CourseSelectionSystem/src/main/java/com/courseselect/service/RecommendationService.java:[116,34] 找不到符号
+  符号:   方法 getSemester()
+  位置: 类型为com.courseselect.entity.Student的变量 student
+[INFO] 3 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  5.012 s
+[INFO] Finished at: 2026-05-09T20:22:41+08:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project course-selection-system: Compilation failure: Compilation failure: 
+[ERROR] /D:/project/CourseSelectionSystem/src/main/java/com/courseselect/client/DeepSeekClient.java:[87,29] 对于Message(java.lang.String,java.lang.String), 找不到合适的构造器
+[ERROR]     构造器 com.courseselect.client.DeepSeekClient.Message.Message()不适用
+[ERROR]       (实际参数列表和形式参数列表长度不同)
+[ERROR]     构造器 com.courseselect.client.DeepSeekClient.Message.Message(java.lang.String,java.lang.String,java.lang.String)不适用
+[ERROR]       (实际参数列表和形式参数列表长度不同)
+[ERROR] /D:/project/CourseSelectionSystem/src/main/java/com/courseselect/client/DeepSeekClient.java:[88,29] 对于Message(java.lang.String,java.lang.String), 找不到合适的构造器
+[ERROR]     构造器 com.courseselect.client.DeepSeekClient.Message.Message()不适用
+[ERROR]       (实际参数列表和形式参数列表长度不同)
+[ERROR]     构造器 com.courseselect.client.DeepSeekClient.Message.Message(java.lang.String,java.lang.String,java.lang.String)不适用
+[ERROR]       (实际参数列表和形式参数列表长度不同)
+[ERROR] /D:/project/CourseSelectionSystem/src/main/java/com/courseselect/service/RecommendationService.java:[116,34] 找不到符号
+[ERROR]   符号:   方法 getSemester()
+[ERROR]   位置: 类型为com.courseselect.entity.Student的变量 student
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
