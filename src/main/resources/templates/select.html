@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/nav :: head('智能选课')}"></head>
+<body>
+<nav th:replace="~{fragments/nav :: nav('select')}"></nav>
+
+<div class="container mt-4">
+    <h3 class="mb-3"><i class="bi bi-magic"></i> AI 智能推荐选课</h3>
+
+    <div class="row g-4">
+        <!-- 左侧：选择 & 推荐 -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label small">选择学生</label>
+                            <select id="studentNo" class="form-select form-select-sm">
+                                <option value="">请选择...</option>
+                                <option th:each="s : ${students}"
+                                        th:value="${s.studentNo}"
+                                        th:text="${s.studentNo + ' - ' + s.name + ' (' + s.major + ')'}"
+                                        th:selected="${param.studentNo != null && param.studentNo == s.studentNo}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">学期</label>
+                            <input type="text" id="semester" class="form-control form-control-sm" value="2025-2026-2">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">推荐数</label>
+                            <input type="number" id="limit" class="form-control form-control-sm" value="5" min="1" max="10">
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-success btn-sm w-100" onclick="doRecommend()">
+                                <i class="bi bi-robot"></i> AI 智能推荐
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 学生画像 -->
+            <div id="studentProfile" class="card border-0 shadow-sm mb-4 d-none">
+                <div class="card-header bg-light">
+                    <i class="bi bi-person-vcard"></i> 学生画像
+                </div>
+                <div class="card-body small" id="profileContent"></div>
+            </div>
+
+            <!-- 推荐结果 -->
+            <div id="recommendResult" class="d-none">
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-header bg-success text-white">
+                        <i class="bi bi-stars"></i> AI 分析
+                    </div>
+                    <div class="card-body" id="aiAnalysis"></div>
+                </div>
+                <h6 class="mb-3">推荐课程 <span id="recCount" class="badge bg-success"></span></h6>
+                <div id="recommendList" class="row g-3"></div>
+            </div>
+
+            <div id="loadingBox" class="text-center py-5 d-none">
+                <div class="spinner-border text-success mb-3"></div>
+                <p class="text-muted">AI 正在分析你的学术背景并生成个性化推荐...</p>
+            </div>
+        </div>
+
+        <!-- 右侧：手动选课快捷入口 -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-light">
+                    <i class="bi bi-plus-circle"></i> 手动选课
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <label class="form-label small">学生</label>
+                        <select id="selStudent" class="form-select form-select-sm">
+                            <option value="">选学生...</option>
+                            <option th:each="s : ${students}"
+                                    th:value="${s.studentNo}"
+                                    th:text="${s.studentNo + ' - ' + s.name}"
+                                    th:selected="${param.studentNo != null && param.studentNo == s.studentNo}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">课程代码</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="quickCourseCode" class="form-control" placeholder="如 CS301">
+                            <button class="btn btn-primary" onclick="quickSelect()">选课</button>
+                        </div>
+                    </div>
+                    <div id="quickSelectMsg" class="small"></div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <i class="bi bi-info-circle"></i> 使用说明
+                </div>
+                <div class="card-body small text-muted">
+                    <ol class="mb-0 ps-3">
+                        <li>选择学生和目标学期</li>
+                        <li>点击 <b>AI 智能推荐</b>，系统调用 DeepSeek 分析学生画像并推荐课程</li>
+                        <li>查看推荐课程的匹配度评分和推荐理由</li>
+                        <li>点击课程卡片上的 <b>选课</b> 按钮直接选课</li>
+                        <li>也可在右侧手动输入课程代码快速选课</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="text-center text-muted py-4 mt-4">
+    <small>智能选课系统 &copy; 2025 · Powered by DeepSeek AI</small>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/api.js"></script>
+<script>
+    // 页面加载时，如果 URL 带有 studentNo，自动触发推荐
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('studentNo')) {
+        document.getElementById('studentNo').value = params.get('studentNo');
+        document.getElementById('selStudent').value = params.get('studentNo');
+        setTimeout(doRecommend, 300);
+    }
+
+    async function doRecommend() {
+        const studentNo = document.getElementById('studentNo').value;
+        const semester = document.getElementById('semester').value;
+        const limit = parseInt(document.getElementById('limit').value) || 5;
+
+        if (!studentNo) { alert('请先选择学生'); return; }
+
+        document.getElementById('loadingBox').classList.remove('d-none');
+        document.getElementById('recommendResult').classList.add('d-none');
+        document.getElementById('studentProfile').classList.add('d-none');
+
+        try {
+            const res = await api.post('/api/selection/recommend', { studentNo, semester, limit });
+            document.getElementById('loadingBox').classList.add('d-none');
+
+            // 显示学生画像
+            showProfile(studentNo);
+            document.getElementById('studentProfile').classList.remove('d-none');
+
+            if (!res.recommendations || res.recommendations.length === 0) {
+                document.getElementById('aiAnalysis').innerHTML = `<p class="text-muted mb-0">${res.analysis || '暂无推荐'}</p>`;
+            } else {
+                document.getElementById('aiAnalysis').innerHTML = `<p class="mb-0">${res.analysis || ''}</p>`;
+                document.getElementById('recCount').textContent = res.recommendations.length;
+                renderRecommendations(res.recommendations, studentNo, semester);
+            }
+            document.getElementById('recommendResult').classList.remove('d-none');
+
+        } catch (e) {
+            document.getElementById('loadingBox').classList.add('d-none');
+            document.getElementById('aiAnalysis').innerHTML = `<p class="text-danger">${e.message}</p>
+                <p class="text-muted small">请确认 DEEPSEEK_API_KEY 已正确设置，且 API 账户有可用余额。</p>`;
+            document.getElementById('recommendResult').classList.remove('d-none');
+        }
+    }
+
+    async function showProfile(studentNo) {
+        try {
+            const s = await api.get('/api/students/' + studentNo);
+            document.getElementById('profileContent').innerHTML = `
+                <span class="me-3"><b>姓名：</b>${s.name}</span>
+                <span class="me-3"><b>专业：</b>${s.major}</span>
+                <span class="me-3"><b>年级：</b>${s.grade}级</span>
+                <span class="me-3"><b>GPA：</b>${s.gpa||'-'}</span>
+                <span class="me-3"><b>兴趣：</b>${s.interests||'未填写'}</span>
+                <span><b>已修学分：</b>${s.completedCredits}</span>`;
+        } catch(e) {}
+    }
+
+    function renderRecommendations(items, studentNo, semester) {
+        const container = document.getElementById('recommendList');
+        container.innerHTML = '';
+        items.forEach((item, idx) => {
+            const scoreColor = item.score >= 80 ? 'success' : item.score >= 60 ? 'warning' : 'danger';
+            const card = document.createElement('div');
+            card.className = 'col-12';
+            card.innerHTML = `
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge bg-secondary">#${idx+1}</span>
+                                <strong class="ms-1">${item.courseCode}</strong>
+                                <span class="ms-2">${item.courseName}</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-${scoreColor} fs-6">${item.score}分</span>
+                            </div>
+                        </div>
+                        <p class="text-muted small mt-2 mb-2">${item.reason}</p>
+                        <button class="btn btn-sm btn-outline-primary"
+                            onclick="quickSelectCourse('${studentNo}','${item.courseCode}')">
+                            <i class="bi bi-plus-circle"></i> 选此课程
+                        </button>
+                    </div>
+                </div>`;
+            container.appendChild(card);
+        });
+    }
+
+    async function quickSelectCourse(studentNo, courseCode) {
+        try {
+            await api.post(`/api/selection/select?studentNo=${studentNo}&courseCode=${courseCode}`);
+            alert(`课程 ${courseCode} 选课成功！`);
+        } catch(e) {
+            alert('选课失败：' + e.message);
+        }
+    }
+
+    async function quickSelect() {
+        const studentNo = document.getElementById('selStudent').value;
+        const courseCode = document.getElementById('quickCourseCode').value.trim();
+        const msg = document.getElementById('quickSelectMsg');
+        if (!studentNo || !courseCode) { msg.innerHTML = '<span class="text-danger">请填写学生和课程</span>'; return; }
+        try {
+            await api.post(`/api/selection/select?studentNo=${studentNo}&courseCode=${courseCode}`);
+            msg.innerHTML = `<span class="text-success">${courseCode} 选课成功！</span>`;
+        } catch(e) {
+            msg.innerHTML = `<span class="text-danger">${e.message}</span>`;
+        }
+    }
+</script>
+</body>
+</html>
